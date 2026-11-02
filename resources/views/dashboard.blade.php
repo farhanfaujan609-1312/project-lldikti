@@ -308,11 +308,22 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1" for="rt-field">RT</label>
-                            <input type="text" id="rt-field" required placeholder="Contoh: RT 01" class="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <select id="rt-field" required class="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-emerald-500 bg-white font-medium">
+                                <option value="RT 01">RT 01</option>
+                                <option value="RT 02">RT 02</option>
+                                <option value="RT 03">RT 03</option>
+                                <option value="RT 04">RT 04</option>
+                                <option value="RT 05">RT 05</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1" for="rw-field">RW</label>
-                            <input type="text" id="rw-field" required placeholder="Contoh: RW 16" class="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <select id="rw-field" required onchange="handleRwChangeInModal(this.value)" class="w-full px-3 py-2 sm:py-1.5 border border-slate-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-emerald-500 bg-white font-medium">
+                                <option value="RW 16">RW 16</option>
+                                <option value="RW 17">RW 17</option>
+                                <option value="RW 18">RW 18</option>
+                                <option value="RW 19">RW 19</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1" for="kelurahan-field">Kelurahan / Desa</label>
@@ -475,7 +486,7 @@
             
             // Get context header address
             const activeRecord = (window.records || []).find(r => isLocationMatch(r.rw, r.rt, window.currentRW, window.currentRT));
-            const kampung = activeRecord ? activeRecord.address_kampung : 'Kp. Sukamaju';
+            const kampung = activeRecord ? activeRecord.address_kampung : (defaultKampungMap[window.currentRW] || 'Kp. Sukamaju');
             const kel = activeRecord ? activeRecord.village : 'Desa Sukamaju';
             const kec = activeRecord ? activeRecord.district : 'Cilaku';
             const kab = activeRecord ? activeRecord.regency : 'Kabupaten Cianjur';
@@ -649,29 +660,59 @@
         renderTable();
     }
 
+    // Mapping default alamat kampung berdasarkan RW
+    const defaultKampungMap = {
+        'RW 16': 'Kp. Sukamaju Utara',
+        'RW 17': 'Kp. Sukamaju Timur',
+        'RW 18': 'Kp. Sukamaju Selatan',
+        'RW 19': 'Kp. Sukamaju Barat',
+    };
+
+    function handleRwChangeInModal(rwVal) {
+        const kampungInput = document.getElementById('kampung-name');
+        if (defaultKampungMap[rwVal]) {
+            kampungInput.value = defaultKampungMap[rwVal];
+        }
+    }
+
     // Modal Form (Tambah / Edit)
     function openFormModal() {
         document.getElementById('modal-title').innerText = 'Tambah Data Penimbangan';
         document.getElementById('garbage-form').reset();
         document.getElementById('entry-id').value = '';
         
-        // Kosongkan alamat dan detail wilayah untuk pengisian awal
+        // Normalisasi RW dan RT aktif agar otomatis terisi sesuai halaman aktif pengguna
+        const activeRw = window.currentRW || 'RW 16';
+        const activeRt = window.currentRT || 'RT 01';
+
+        document.getElementById('rw-field').value = activeRw;
+        document.getElementById('rt-field').value = activeRt;
+
+        // Ambil data acuan wilayah dari data yang sudah ada di lokasi aktif jika tersedia
+        const activeRecord = (window.records || []).find(r => isLocationMatch(r.rw, r.rt, activeRw, activeRt));
+
+        document.getElementById('kampung-name').value = activeRecord ? activeRecord.address_kampung : (defaultKampungMap[activeRw] || 'Kp. Sukamaju');
+        document.getElementById('kelurahan-field').value = activeRecord ? activeRecord.village : 'Desa Sukamaju';
+        document.getElementById('kecamatan-field').value = activeRecord ? activeRecord.district : 'Cilaku';
+        document.getElementById('kabupaten-field').value = activeRecord ? activeRecord.regency : 'Kabupaten Cianjur';
+        
+        // Input spesifik data penimbangan dikosongkan agar pengguna langsung mengisi
         document.getElementById('house-owner').value = '';
-        document.getElementById('kampung-name').value = '';
-        document.getElementById('rt-field').value = '';
-        document.getElementById('rw-field').value = '';
-        document.getElementById('rt-field').placeholder = window.currentRT || 'RT 01';
-        document.getElementById('rw-field').placeholder = window.currentRW || 'RW 16';
-        document.getElementById('kelurahan-field').value = '';
-        document.getElementById('kecamatan-field').value = '';
-        document.getElementById('kabupaten-field').value = '';
         document.getElementById('organic-weight').value = '';
         document.getElementById('nonorganic-weight').value = '';
         
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('weigh-date').value = today;
-        document.getElementById('week-number').value = 'Minggu 1';
+
+        const dayOfMonth = new Date().getDate();
+        const currentWeekNum = Math.min(Math.floor((dayOfMonth - 1) / 7) + 1, 5);
+        document.getElementById('week-number').value = `Minggu ${currentWeekNum}`;
+
         document.getElementById('form-modal').classList.remove('hidden');
+
+        setTimeout(() => {
+            document.getElementById('house-owner').focus();
+        }, 100);
     }
 
     function openEditModal(id) {
@@ -682,11 +723,19 @@
         document.getElementById('entry-id').value = item.id;
         document.getElementById('house-owner').value = item.owner_name || '';
         document.getElementById('kampung-name').value = item.address_kampung || '';
-        document.getElementById('rt-field').value = item.rt || window.currentRT;
-        document.getElementById('rw-field').value = item.rw || window.currentRW;
-        document.getElementById('kelurahan-field').value = item.village || '';
-        document.getElementById('kecamatan-field').value = item.district || '';
-        document.getElementById('kabupaten-field').value = item.regency || '';
+
+        // Pastikan format RW dan RT cocok dengan opsi select
+        const rwDigits = (item.rw || '').toString().match(/\d+/);
+        const rwVal = rwDigits ? 'RW ' + String(parseInt(rwDigits[0], 10)).padStart(2, '0') : (window.currentRW || 'RW 16');
+        const rtDigits = (item.rt || '').toString().match(/\d+/);
+        const rtVal = rtDigits ? 'RT ' + String(parseInt(rtDigits[0], 10)).padStart(2, '0') : (window.currentRT || 'RT 01');
+
+        document.getElementById('rw-field').value = rwVal;
+        document.getElementById('rt-field').value = rtVal;
+
+        document.getElementById('kelurahan-field').value = item.village || 'Desa Sukamaju';
+        document.getElementById('kecamatan-field').value = item.district || 'Cilaku';
+        document.getElementById('kabupaten-field').value = item.regency || 'Kabupaten Cianjur';
         document.getElementById('weigh-date').value = item.weigh_date ? item.weigh_date.substring(0, 10) : '';
         document.getElementById('week-number').value = item.week_number || 'Minggu 1';
         document.getElementById('organic-weight').value = item.organic_weight || 0;
@@ -705,33 +754,11 @@
 
         const entryId = document.getElementById('entry-id').value;
 
-        let rtVal = document.getElementById('rt-field').value.trim();
-        let rwVal = document.getElementById('rw-field').value.trim();
-
-        // Jika kosong, gunakan RW dan RT yang sedang aktif dipilih
-        if (!rwVal) {
-            rwVal = window.currentRW;
-        } else {
-            const rwDigits = rwVal.match(/\d+/);
-            if (rwDigits) {
-                rwVal = 'RW ' + String(parseInt(rwDigits[0], 10)).padStart(2, '0');
-            }
-        }
-
-        if (!rtVal) {
-            rtVal = window.currentRT;
-        } else {
-            const rtDigits = rtVal.match(/\d+/);
-            if (rtDigits) {
-                rtVal = 'RT ' + String(parseInt(rtDigits[0], 10)).padStart(2, '0');
-            }
-        }
-
         const payload = {
             owner_name: document.getElementById('house-owner').value.trim(),
             address_kampung: document.getElementById('kampung-name').value.trim(),
-            rt: rtVal,
-            rw: rwVal,
+            rt: document.getElementById('rt-field').value,
+            rw: document.getElementById('rw-field').value,
             village: document.getElementById('kelurahan-field').value.trim(),
             district: document.getElementById('kecamatan-field').value.trim(),
             regency: document.getElementById('kabupaten-field').value.trim(),
@@ -778,6 +805,14 @@
                 // Prepend new item
                 window.records.unshift(result.data);
                 showToast('Data penimbangan berhasil ditambahkan!', 'success');
+
+                // Jika data yang disimpan berada di RW / RT yang berbeda, otomatis arahkan tampilan ke lokasi tersebut
+                if (result.data.rw && result.data.rt && !isLocationMatch(result.data.rw, result.data.rt, window.currentRW, window.currentRT)) {
+                    window.currentRW = result.data.rw;
+                    window.currentRT = result.data.rt;
+                    document.getElementById('active-location-badge').innerText = `${window.currentRW} / ${window.currentRT}`;
+                    document.getElementById('filter-location-text').innerText = `${window.currentRW} / ${window.currentRT}`;
+                }
             }
 
             closeFormModal();
