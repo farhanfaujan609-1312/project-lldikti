@@ -19,11 +19,19 @@ class WasteRecordController extends Controller
         $query = WasteRecord::query()->latest('weigh_date')->latest('id');
 
         if ($request->filled('rw')) {
-            $query->where('rw', $request->string('rw'));
+            $rwInput = (string) $request->string('rw');
+            if (preg_match('/\d+/', $rwInput, $matches)) {
+                $rwInput = 'RW '.sprintf('%02d', (int) $matches[0]);
+            }
+            $query->where('rw', $rwInput);
         }
 
         if ($request->filled('rt')) {
-            $query->where('rt', $request->string('rt'));
+            $rtInput = (string) $request->string('rt');
+            if (preg_match('/\d+/', $rtInput, $matches)) {
+                $rtInput = 'RT '.sprintf('%02d', (int) $matches[0]);
+            }
+            $query->where('rt', $rtInput);
         }
 
         if ($request->filled('search')) {
@@ -60,7 +68,7 @@ class WasteRecordController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validated = $this->validateRecord($request);
+        $validated = $this->normalizeLocationData($this->validateRecord($request));
         $validated['user_id'] = Auth::id();
 
         $record = WasteRecord::create($validated);
@@ -77,7 +85,7 @@ class WasteRecordController extends Controller
      */
     public function update(Request $request, WasteRecord $record): JsonResponse
     {
-        $validated = $this->validateRecord($request);
+        $validated = $this->normalizeLocationData($this->validateRecord($request));
         $record->update($validated);
 
         return response()->json([
@@ -107,6 +115,13 @@ class WasteRecordController extends Controller
     {
         $rw = $request->string('rw', 'RW 16')->toString();
         $rt = $request->string('rt', 'RT 01')->toString();
+
+        if (preg_match('/\d+/', $rw, $matches)) {
+            $rw = 'RW '.sprintf('%02d', (int) $matches[0]);
+        }
+        if (preg_match('/\d+/', $rt, $matches)) {
+            $rt = 'RT '.sprintf('%02d', (int) $matches[0]);
+        }
 
         $records = WasteRecord::where('rw', $rw)
             ->where('rt', $rt)
@@ -166,6 +181,25 @@ class WasteRecordController extends Controller
 
             fclose($handle);
         }, 200, $headers);
+    }
+
+    /**
+     * Normalize RW and RT formats (e.g. "16" -> "RW 16", "01" -> "RT 01").
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeLocationData(array $data): array
+    {
+        if (isset($data['rw']) && preg_match('/\d+/', (string) $data['rw'], $matches)) {
+            $data['rw'] = 'RW '.sprintf('%02d', (int) $matches[0]);
+        }
+
+        if (isset($data['rt']) && preg_match('/\d+/', (string) $data['rt'], $matches)) {
+            $data['rt'] = 'RT '.sprintf('%02d', (int) $matches[0]);
+        }
+
+        return $data;
     }
 
     /**

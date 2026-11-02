@@ -16,106 +16,87 @@ class WasteRecordSeeder extends Seeder
         $admin = User::first();
         $userId = $admin?->id;
 
-        $records = [
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 16',
-                'rt' => 'RT 01',
-                'owner_name' => 'Ahmad Subagja',
-                'address_kampung' => 'Kp. Sukamaju No. 12',
+        $rws = [
+            'RW 16' => [
+                'kampung' => 'Kp. Sukamaju Utara',
                 'village' => 'Desa Sukamaju',
                 'district' => 'Cilaku',
                 'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-05',
-                'week_number' => 'Minggu 1',
-                'organic_weight' => 3.5,
-                'non_organic_weight' => 1.2,
             ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 16',
-                'rt' => 'RT 01',
-                'owner_name' => 'Siti Aminah',
-                'address_kampung' => 'Kp. Sukamaju Rt 01',
+            'RW 17' => [
+                'kampung' => 'Kp. Sukamaju Timur',
                 'village' => 'Desa Sukamaju',
                 'district' => 'Cilaku',
                 'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-06',
-                'week_number' => 'Minggu 1',
-                'organic_weight' => 2.0,
-                'non_organic_weight' => 2.8,
             ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 16',
-                'rt' => 'RT 01',
-                'owner_name' => 'Budi Santoso',
-                'address_kampung' => 'Kp. Sukamaju No. 45',
+            'RW 18' => [
+                'kampung' => 'Kp. Sukamaju Selatan',
                 'village' => 'Desa Sukamaju',
                 'district' => 'Cilaku',
                 'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-07',
-                'week_number' => 'Minggu 1',
-                'organic_weight' => 4.1,
-                'non_organic_weight' => 1.5,
             ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 16',
-                'rt' => 'RT 02',
-                'owner_name' => 'Hendra Wijaya',
-                'address_kampung' => 'Kp. Sukamaju Rt 02',
+            'RW 19' => [
+                'kampung' => 'Kp. Sukamaju Barat',
                 'village' => 'Desa Sukamaju',
                 'district' => 'Cilaku',
                 'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-08',
-                'week_number' => 'Minggu 1',
-                'organic_weight' => 1.8,
-                'non_organic_weight' => 2.2,
-            ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 17',
-                'rt' => 'RT 01',
-                'owner_name' => 'Rina Kartika',
-                'address_kampung' => 'Kp. Sukamaju Timur No. 05',
-                'village' => 'Desa Sukamaju',
-                'district' => 'Cilaku',
-                'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-09',
-                'week_number' => 'Minggu 2',
-                'organic_weight' => 5.0,
-                'non_organic_weight' => 3.0,
-            ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 18',
-                'rt' => 'RT 01',
-                'owner_name' => 'Dedi Kurniawan',
-                'address_kampung' => 'Kp. Sukamaju Selatan No. 18',
-                'village' => 'Desa Sukamaju',
-                'district' => 'Cilaku',
-                'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-10',
-                'week_number' => 'Minggu 2',
-                'organic_weight' => 3.2,
-                'non_organic_weight' => 2.1,
-            ],
-            [
-                'user_id' => $userId,
-                'rw' => 'RW 19',
-                'rt' => 'RT 01',
-                'owner_name' => 'Yusuf Maulana',
-                'address_kampung' => 'Kp. Sukamaju Barat No. 09',
-                'village' => 'Desa Sukamaju',
-                'district' => 'Cilaku',
-                'regency' => 'Kabupaten Cianjur',
-                'weigh_date' => '2026-10-11',
-                'week_number' => 'Minggu 2',
-                'organic_weight' => 4.0,
-                'non_organic_weight' => 1.8,
             ],
         ];
+
+        $namesPool = [
+            ['Ahmad Subagja', 3.5, 1.2],
+            ['Siti Aminah', 2.0, 2.8],
+            ['Budi Santoso', 4.1, 1.5],
+            ['Hendra Wijaya', 1.8, 2.2],
+            ['Rina Kartika', 5.0, 3.0],
+            ['Dedi Kurniawan', 3.2, 2.1],
+            ['Yusuf Maulana', 4.0, 1.8],
+            ['Dewi Sartika', 2.5, 1.5],
+            ['Agus Setiawan', 3.8, 2.0],
+            ['Nur Hasanah', 2.2, 3.1],
+            ['Eko Prasetyo', 4.5, 1.9],
+            ['Sri Wahyuni', 3.0, 2.4],
+            ['Wawan Gunawan', 2.7, 1.8],
+            ['Endang Sujana', 3.6, 2.5],
+            ['Lilis Suryani', 2.9, 1.6],
+            ['Cecep Supriadi', 4.2, 2.3],
+            ['Iis Aisyah', 3.1, 1.7],
+            ['Dadan Ramdani', 2.4, 2.6],
+            ['Asep Sunandar', 5.2, 3.4],
+            ['Tini Rostini', 2.8, 1.9],
+        ];
+
+        $records = [];
+        $nameIndex = 0;
+
+        foreach ($rws as $rwName => $loc) {
+            foreach (['RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05'] as $rtIndex => $rtName) {
+                // Setiap RT kita beri 2 data penimbangan warga
+                for ($k = 1; $k <= 2; $k++) {
+                    $person = $namesPool[$nameIndex % count($namesPool)];
+                    $nameIndex++;
+
+                    $day = 5 + ($rtIndex * 2) + $k;
+                    $dateStr = sprintf('2026-10-%02d', min($day, 28));
+                    $weekNum = 'Minggu '.(intdiv($day - 1, 7) + 1);
+
+                    $records[] = [
+                        'user_id' => $userId,
+                        'rw' => $rwName,
+                        'rt' => $rtName,
+                        'owner_name' => $person[0],
+                        'address_kampung' => $loc['kampung'].' No. '.($rtIndex * 10 + $k * 3),
+                        'village' => $loc['village'],
+                        'district' => $loc['district'],
+                        'regency' => $loc['regency'],
+                        'weigh_date' => $dateStr,
+                        'week_number' => $weekNum,
+                        'organic_weight' => $person[1],
+                        'non_organic_weight' => $person[2],
+                    ];
+                }
+            }
+        }
 
         foreach ($records as $record) {
             WasteRecord::create($record);

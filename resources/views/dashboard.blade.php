@@ -404,6 +404,30 @@
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+    // Helper: Ekstraksi angka untuk mencocokkan format "16", "RW 16", "01", "RT 01"
+    function extractLocationNumber(str) {
+        if (!str) return null;
+        const match = str.toString().match(/\d+/);
+        return match ? parseInt(match[0], 10) : null;
+    }
+
+    function isLocationMatch(itemRw, itemRt, targetRw, targetRt) {
+        const itemRwNum = extractLocationNumber(itemRw);
+        const targetRwNum = extractLocationNumber(targetRw);
+        const itemRtNum = extractLocationNumber(itemRt);
+        const targetRtNum = extractLocationNumber(targetRt);
+
+        const rwMatches = (itemRwNum !== null && targetRwNum !== null)
+            ? (itemRwNum === targetRwNum)
+            : (String(itemRw || '').trim().toLowerCase() === String(targetRw || '').trim().toLowerCase());
+
+        const rtMatches = (itemRtNum !== null && targetRtNum !== null)
+            ? (itemRtNum === targetRtNum)
+            : (String(itemRt || '').trim().toLowerCase() === String(targetRt || '').trim().toLowerCase());
+
+        return rwMatches && rtMatches;
+    }
+
     // Navigation Step
     function navigateToStep(step) {
         document.getElementById('step-1').classList.add('hidden');
@@ -450,7 +474,7 @@
             document.getElementById('filter-location-text').innerText = `${window.currentRW} / ${window.currentRT}`;
             
             // Get context header address
-            const activeRecord = (window.records || []).find(r => r.rw === window.currentRW && r.rt === window.currentRT);
+            const activeRecord = (window.records || []).find(r => isLocationMatch(r.rw, r.rt, window.currentRW, window.currentRT));
             const kampung = activeRecord ? activeRecord.address_kampung : 'Kp. Sukamaju';
             const kel = activeRecord ? activeRecord.village : 'Desa Sukamaju';
             const kec = activeRecord ? activeRecord.district : 'Cilaku';
@@ -490,7 +514,7 @@
 
         // Filter data by selected RW, RT and search query
         const filteredRecords = allRecords.filter(item => {
-            const matchesLocation = item.rw === window.currentRW && item.rt === window.currentRT;
+            const matchesLocation = isLocationMatch(item.rw, item.rt, window.currentRW, window.currentRT);
             const fullTextSearch = `${item.owner_name} ${item.address_kampung} ${item.village} ${item.district} ${item.regency} ${item.week_number}`.toLowerCase();
             const matchesSearch = fullTextSearch.includes(searchQuery);
             return matchesLocation && matchesSearch;
@@ -607,7 +631,7 @@
     // Summary Statistics
     function updateSummaryStats() {
         const allRecords = window.records || [];
-        const currentRtRecords = allRecords.filter(item => item.rw === window.currentRW && item.rt === window.currentRT);
+        const currentRtRecords = allRecords.filter(item => isLocationMatch(item.rw, item.rt, window.currentRW, window.currentRT));
 
         const totalCount = currentRtRecords.length;
         const totalOrganic = currentRtRecords.reduce((sum, item) => sum + parseFloat(item.organic_weight || 0), 0);
@@ -636,6 +660,8 @@
         document.getElementById('kampung-name').value = '';
         document.getElementById('rt-field').value = '';
         document.getElementById('rw-field').value = '';
+        document.getElementById('rt-field').placeholder = window.currentRT || 'RT 01';
+        document.getElementById('rw-field').placeholder = window.currentRW || 'RW 16';
         document.getElementById('kelurahan-field').value = '';
         document.getElementById('kecamatan-field').value = '';
         document.getElementById('kabupaten-field').value = '';
@@ -678,11 +704,34 @@
         event.preventDefault();
 
         const entryId = document.getElementById('entry-id').value;
+
+        let rtVal = document.getElementById('rt-field').value.trim();
+        let rwVal = document.getElementById('rw-field').value.trim();
+
+        // Jika kosong, gunakan RW dan RT yang sedang aktif dipilih
+        if (!rwVal) {
+            rwVal = window.currentRW;
+        } else {
+            const rwDigits = rwVal.match(/\d+/);
+            if (rwDigits) {
+                rwVal = 'RW ' + String(parseInt(rwDigits[0], 10)).padStart(2, '0');
+            }
+        }
+
+        if (!rtVal) {
+            rtVal = window.currentRT;
+        } else {
+            const rtDigits = rtVal.match(/\d+/);
+            if (rtDigits) {
+                rtVal = 'RT ' + String(parseInt(rtDigits[0], 10)).padStart(2, '0');
+            }
+        }
+
         const payload = {
             owner_name: document.getElementById('house-owner').value.trim(),
             address_kampung: document.getElementById('kampung-name').value.trim(),
-            rt: document.getElementById('rt-field').value.trim(),
-            rw: document.getElementById('rw-field').value.trim(),
+            rt: rtVal,
+            rw: rwVal,
             village: document.getElementById('kelurahan-field').value.trim(),
             district: document.getElementById('kecamatan-field').value.trim(),
             regency: document.getElementById('kabupaten-field').value.trim(),
